@@ -1,0 +1,60 @@
+#Setjum 364 daga ( svo það gangi uppí 52 vikur með 7 dögum í viku ) 
+set days;
+#Segjum að við séum með 6000 sjúklinga
+set id;
+
+
+#Setjum skorður sem skilgreina fjölda sjúklinga á dag
+param nowork;
+param halfday;
+param fullday;
+
+
+#Hér viljum við breytu sem hægt er að móta eftir dögum sem unnið er á, 
+/*var ervinna{days} binary default 1; */
+
+#Hér skorðum við dagana þannig að þeir dagar sem unnið er á taka gildið 1 annars 0. 
+/*subject to noworkonfri{t in 0..51}:
+ervinna[5+7*t] == 0;
+subject to noworkonsat{t in 0..51}:
+ervinna[6+7*t] == 0;
+subject to noworkonsun{t in 0..51}:
+ervinna[7+7*t] == 0;
+subject to noworkonmon{t in 0..51}:
+ervinna[1+7*t] == 0; */
+
+
+#Búum til breytu sem framvkæmir max capacity
+var maxpatient{i in id, d in days} >=0;
+
+
+/*#skorður til að passa að ekki sé unnið á tilteknum dögum og hámarks fjölda sjúklinga per vissa daga
+s.t. worktuesday{t in 0..51}: maxpatient[2+7*t]*ervinna[2+7*t] <= fullday;
+s.t. halfworkwednesday{t in 0..51}: maxpatient[3+7*t]*ervinna[3+7*t] <= halfday;
+s.t. workthursday{t in 0..51}: maxpatient[4+7*t]*ervinna[4+7*t] <= fullday;
+*/
+
+#Búum til tvívíða breytu sem að raðar sjúklingum á daga. 
+var patientslot{id,days} default 1;
+
+subject to noworkonfri{i in id,t in 0..51}:
+patientslot[i,5+7*t] == 0;
+subject to noworkonsat{i in id,t in 0..51}:
+patientslot[i,6+7*t] == 0;
+subject to noworkonsun{i in id,t in 0..51}:
+patientslot[i,7+7*t] == 0;
+subject to noworkonmon{i in id,t in 0..51}:
+patientslot[i,1+7*t] == 0;
+
+
+#skorður til að passa að ekki sé unnið á tilteknum dögum og hámarks fjölda sjúklinga per vissa daga
+s.t. worktuesday{i in id}: sum{t in 0..51} maxpatient[i,2+7*t]*patientslot[i,2+7*t] <= fullday;
+s.t. halfworkwednesday{i in id}: sum{t in 0..51} maxpatient[i,3+7*t]*patientslot[i,3+7*t] <= halfday;
+s.t. workthursday{i in id}: sum{t in 0..51} maxpatient[i,4+7*t]*patientslot[i,4+7*t] <= fullday;
+
+/*s.t. worktuesday1{i in id, d in days}: sum{i in id} maxpatient[i,d] <=45;
+#þetta er að valda -498
+/*s.t. einntimiperlinu{d in days}: sum{i in id} patientslot[i,d]<=1;*/
+
+#markfall í vinnslu
+maximize hamarksfjoldi:  sum{i in id, d in days} maxpatient[i,d]*patientslot[i,d];
